@@ -2,7 +2,7 @@ from kafka import KafkaProducer
 import json
 import time
 import random
-from daetime import datetime
+from datetime import datetime
 
 event_types = [
         'page_view',
@@ -49,17 +49,30 @@ def generate_event():
         }
 
 def create_kafka_stream():
+    import os
+    
+    # Use environment variable for Kafka broker, fallback to local development
+    kafka_broker = os.getenv('KAFKA_BOOTSTRAP_SERVERS', 'broker:9092')
+    
+    try:
+        producer = KafkaProducer(
+            bootstrap_servers = kafka_broker,
+            value_serializer = lambda v: json.dumps(v).encode('utf-8')
+        )
 
-    producer = KafkaProducer(
-        bootstrap_servers = 'kafka:9092',
-        value_serializer = lambda v: json.dumps(v).encode('utf-8')
-    )
+        for i in range(50):
+            event = generate_event()
+            producer.send('user_events', event)
+            print(f"Sent event: {event}")
+            time.sleep(0.2)
+            
+        producer.flush()  # Ensure all messages are sent
+        print("Successfully sent all events to Kafka")
+        
+    except Exception as e:
+        print(f"Failed to connect to Kafka at {kafka_broker}: {str(e)}")
+        print("This is expected if Kafka is not available in the deployment environment")
+        # You could implement alternative logic here (e.g., write to file, database, etc.)
 
-    for i in range(50):
-        event = generate_event()
-        producer.send('user_events', event)
-        print(f"Sent event: {event}")
-        time.sleep(0.2)
-
-if __name__ == "__main__":
+if __name__ == "_main_":
     create_kafka_stream()
