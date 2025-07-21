@@ -4,7 +4,10 @@ from pyflink.table.expressions import col
 import os
 
 def main():
-    
+
+    #command to download jar file
+    #wget -O jars/flink-sql-connector-kafka.jar https://repo1.maven.org/maven2/org/apache/flink/flink-sql-connector-kafka/4.0.0-2.0/flink-sql-connector-kafka-4.0.0-2.0.jar
+ 
     # Add Kafka connector JAR to the Flink configuration
     kafka_jar_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'jars', 'flink-sql-connector-kafka.jar')
     
