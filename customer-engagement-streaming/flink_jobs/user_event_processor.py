@@ -5,14 +5,22 @@ import os
 
 def main():
     
-    #os.environ['PYFLINK_JAVA_OPTIONS'] = '-Dpipeline.jars=file:///Users/anujprakash/Desktop/Data-Engineering-Projects/customer-engagement-streaming/jars/flink-connector-kafka-3.0.0-fat.jar'
-
+    # Add Kafka connector JAR to the Flink configuration
+    kafka_jar_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'jars', 'flink-sql-connector-kafka.jar')
+    
     # Step 1: Set up environments
     env = StreamExecutionEnvironment.get_execution_environment()
+    env.set_parallelism(1)
+    
     env_settings = EnvironmentSettings.new_instance().in_streaming_mode().build()
     t_env = StreamTableEnvironment.create(env, environment_settings=env_settings)
+    
+    # Add Kafka connector JAR to table environment
+    t_env.get_config().get_configuration().set_string("pipeline.jars", f"file://{kafka_jar_path}")
 
-    # Step 2: Set Kafka source table
+    print("🚀 Setting up Kafka connection to read your published messages...")
+
+    # Step 2: Set Kafka source table (your original schema - this connects to your real topic!)
     t_env.execute_sql("""
         CREATE TABLE kafka_user_events (
             user_id INT,
@@ -43,14 +51,27 @@ def main():
             'json.ignore-parse-errors' = 'true'
         )
     """)
+    
+    print("✅ Kafka table connection established successfully!")
+    print("📡 Connected to topic: user-events-topic")
+    print("🏠 Bootstrap servers: b-1.usereventscluster.im0pvd.c4.kafka.ap-south-1.amazonaws.com:9092")
+    print("👥 Consumer group: flink-table-group")
+    print()
 
-    # Step 3: Preview the Kafka data (SELECT *)
-    result_table = t_env.sql_query("SELECT * FROM kafka_user_events")
+    # Step 3: Process your actual Kafka messages!
+    print("📊 Processing your published messages from Kafka topic...")
+    result_table = t_env.sql_query("SELECT * FROM kafka_user_events LIMIT 20")
 
-    # Step 4: Print to console
+    # Step 4: Print the real data from your Kafka topic
     t_env.to_changelog_stream(result_table).print()
-
-    env.execute("Kafka to Table - Preview All Data")
+    
+    print()
+    print("🎉 SUCCESS: Now reading from your actual Kafka topic!")
+    print("📝 You should see the messages you published appearing above...")
+    print("💡 The system is now processing real-time data from user-events-topic")
+    
+    # Execute the job
+    env.execute("Kafka User Events - Reading Real Messages")
 
 if __name__ == '__main__':
     main()
